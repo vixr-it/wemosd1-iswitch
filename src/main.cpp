@@ -15,12 +15,13 @@
 
 const char* ssid = "HOMEAUTOEXT";
 const char* password = "homeautonet";
+const char* mqttServer = "192.168.22.20";
 
 const char* clientNAme = "swcameradaletto";
-const char* mqttServer = "192.168.22.20";
-const char* outTopic1 = "amdomus/basicio/swcameradaletto/SW1";
-const char* inTopic = "amdomus/basicio/swcameradaletto/command";
+char* outTopic1 = "";
+
 const char* infoTopic = "amdomus/basicio/swcameradaletto/info";
+const char* outTopicTemplate = "amdomus/basicio/%s/SW%d";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -35,6 +36,13 @@ long lastBtn1 = 0;
 int lastBtn1State = 0;
 boolean sendCommandSw1 = false;
 long lenCommandSw1 = 0;
+
+const int button2 = D2;
+char* button2Status;
+long lastBtn2 = 0;
+int lastBtn2State = 0;
+boolean sendCommandSw2 = false;
+long lenCommandSw2 = 0;
 
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   // Gestione MQTT in ingresso
@@ -75,6 +83,12 @@ void setup() {
   // Collegamento a MQTT
   client.setServer(mqttServer, 1883);
   client.setCallback(mqttCallback);
+
+  // Inizializzo i Topic
+  char* outTopic1 = "";
+  sprintf(outTopic1, outTopicTemplate, clientNAme, 1 );
+
+  Serial.println(  outTopic1 );
   
 
 }
@@ -85,8 +99,7 @@ void reconnect() {
     Serial.print("Tentativo di connessione MQTT...");
     if (client.connect( clientNAme )) {  
       Serial.println("connesso");
-      client.publish(infoTopic, "Hello world, I'm AM Domus Client");
-      client.subscribe(inTopic);
+      client.publish(infoTopic, "Hello world, I'm AM Domus Client");      
     } else {
       Serial.print("Fallito, rc=");
       Serial.print(client.state());
@@ -112,23 +125,15 @@ void loop() {
   }
 
   int tmpButton1 = digitalRead(button1);  
-
   if( tmpButton1 == 1 ){
     if( lastBtn1State == 0 ){      
 
       lenCommandSw1 = now;
       lastBtn1State = 1;
       Serial.println("Button 1 Pressed");
-      Serial.println(lastBtn1State);
-      if( button1Status == "ON" ){
-        button1Status = "OFF";      
-      }else{
-        button1Status = "ON";
-      }      
       sendCommandSw1 = true;      
     }        
   }else{
-
     if( sendCommandSw1 ){
       long delaySw1 = now - lenCommandSw1;
       if  ( delaySw1 < 1000 ){
@@ -138,8 +143,30 @@ void loop() {
       }
       sendCommandSw1 = false;
     }
-
     lastBtn1State = 0;    
+    delay(100);
+  }
+
+  int tmpButton2 = digitalRead(button2);  
+  if( tmpButton2 == 1 ){
+    if( lastBtn2State == 0 ){      
+
+      lenCommandSw2 = now;
+      lastBtn2State = 1;
+      Serial.println("Button 2 Pressed");
+      sendCommandSw2 = true;      
+    }        
+  }else{
+    if( sendCommandSw2 ){
+      long delaySw2 = now - lenCommandSw2;
+      if  ( delaySw2 < 1000 ){
+        client.publish(outTopic2, "TOGGLE");
+      }else{
+        client.publish(outTopic2, "TOGGLE_DELAYED");
+      }
+      sendCommandSw2 = false;
+    }
+    lastBtn2State = 0;
     delay(100);
   }
 
