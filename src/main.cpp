@@ -18,7 +18,8 @@ const char* password = "homeautonet";
 const char* mqttServer = "192.168.22.20";
 
 const char* clientNAme = "swcameradaletto";
-char* outTopic1 = "";
+char* outTopic1 = "amdomus/basicio/swcameradaletto/SW1";
+char* outTopic2 = "amdomus/basicio/swcameradaletto/SW2";
 
 const char* infoTopic = "amdomus/basicio/swcameradaletto/info";
 const char* outTopicTemplate = "amdomus/basicio/%s/SW%d";
@@ -30,14 +31,14 @@ long lastMsg = 0;
 int value = 0;
 char msg[75];
 
-const int button1 = D1;
+const int button1 = D4;
 char* button1Status;
 long lastBtn1 = 0;
 int lastBtn1State = 0;
 boolean sendCommandSw1 = false;
 long lenCommandSw1 = 0;
 
-const int button2 = D2;
+const int button2 = D3;
 char* button2Status;
 long lastBtn2 = 0;
 int lastBtn2State = 0;
@@ -63,6 +64,10 @@ void setup() {
   pinMode(button1, INPUT);
   button1Status = "ON";
 
+  pinMode(button2, INPUT);
+  button1Status = "ON";
+
+
   // inizializzo la parte WifiWiFi.mode(WIFI_STA);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -84,13 +89,9 @@ void setup() {
   client.setServer(mqttServer, 1883);
   client.setCallback(mqttCallback);
 
-  // Inizializzo i Topic
-  char* outTopic1 = "";
-  sprintf(outTopic1, outTopicTemplate, clientNAme, 1 );
-
-  Serial.println(  outTopic1 );
-  
-
+  Serial.println(outTopic1);
+  delay(2000);
+  Serial.println(outTopic2);
 }
 
 void reconnect() {
@@ -125,7 +126,9 @@ void loop() {
   }
 
   int tmpButton1 = digitalRead(button1);  
-  if( tmpButton1 == 1 ){
+  int tmpButton2 = digitalRead(button2);
+
+  if( tmpButton1 == 0 ){
     if( lastBtn1State == 0 ){      
 
       lenCommandSw1 = now;
@@ -143,12 +146,12 @@ void loop() {
       }
       sendCommandSw1 = false;
     }
-    lastBtn1State = 0;    
-    delay(100);
+    lastBtn1State = 0;   
+    delay(100); 
   }
 
-  int tmpButton2 = digitalRead(button2);  
-  if( tmpButton2 == 1 ){
+    
+  if( tmpButton2 == 0 ){
     if( lastBtn2State == 0 ){      
 
       lenCommandSw2 = now;
