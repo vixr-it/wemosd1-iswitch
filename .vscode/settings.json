@@ -1,6 +1,6 @@
 {
     "terminal.integrated.env.osx": {
-        "PATH": "/Users/alessandrolanni/.platformio/penv/bin:/Users/alessandrolanni/.platformio/penv:~/Library/Python/3.7/bin:/Library/Frameworks/Python.framework/Versions/3.7/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/share/dotnet:/Library/Frameworks/Mono.framework/Versions/Current/Commands:/Applications/Wireshark.app/Contents/MacOS:/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin:/Users/alessandrolanni/Flutter/flutter/bin:/opt/apache-maven/bin",
+        "PATH": "/Users/alessandrolanni/.platformio/penv/bin:/Users/alessandrolanni/.platformio/penv:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Apple/usr/bin:/Library/Apple/bin:/Users/alessandrolanni/Workspace/flutter/bin:/Users/alessandrolanni/Workspace/tools/bin:/opt/apache-maven/bin",
         "PLATFORMIO_CALLER": "vscode"
     },
     "terminal.integrated.env.windows": {

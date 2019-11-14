@@ -13,15 +13,21 @@
 #include <WiFiClient.h>
 
 
-const char* ssid = "HOMEAUTOEXT";
-const char* password = "homeautonet";
-const char* mqttServer = "192.168.22.20";
+const char* ssid = "AMDomus";
+const char* password = "AleMar7981";
+const char* mqttServer = "192.168.1.121";
 
-const char* clientNAme = "swcameradaletto";
-char* outTopic1 = "amdomus/basicio/swcameradaletto/SW1";
-char* outTopic2 = "amdomus/basicio/swcameradaletto/SW2";
+//swloginlogout
+//swcomandoesternocucina
+//swscaleinterne
 
-const char* infoTopic = "amdomus/basicio/swcameradaletto/info";
+const char* clientNAme = "swloginlogout";
+char* outTopic1 = "amdomus/basicio/swloginlogout/SW1";
+char* outTopic2 = "amdomus/basicio/swloginlogout/SW2";
+
+const char* ledATopic = "amdomus/basicio/swloginlogout/ledA";
+const char* ledBTopic = "amdomus/basicio/swloginlogout/ledB";
+const char* infoTopic = "amdomus/basicio/swloginlogout/info";
 const char* outTopicTemplate = "amdomus/basicio/%s/SW%d";
 
 WiFiClient espClient;
@@ -45,15 +51,55 @@ int lastBtn2State = 0;
 boolean sendCommandSw2 = false;
 long lenCommandSw2 = 0;
 
+const int ledA = D2;
+const int ledB = D1;
+
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   // Gestione MQTT in ingresso
   Serial.print("Ricevuto messaggio [");
   Serial.print(topic);
   Serial.print("] ");
+
+  boolean test = topic == ledATopic;
+  Serial.print(test);
+
+  String message;
+
   for (int i = 0; i < length; i++) {
-    Serial.print((char)payload[i]);
+    char c = (char)payload[i]; 
+    message += c;
   }
-  Serial.println();
+  Serial.println(message);
+
+  if( strcmp(topic, ledATopic ) ){
+
+    if( message == "ON" ){
+      analogWrite( ledA, 255);
+    }else if( message == "OFF" ){
+      analogWrite( ledA, 0);
+    }else{
+      analogWrite( ledA, message.toInt() );
+    }
+
+    Serial.println( message.toInt() );
+
+  }
+
+  if( strcmp(topic, ledBTopic ) ){
+
+    if( message == "ON" ){
+      analogWrite( ledB, 255);
+    }else if( message == "OFF" ){
+      analogWrite( ledB, 0);
+    }else{
+      analogWrite( ledB, message.toInt() );
+    }
+
+    Serial.println( message.toInt() );
+
+  }
+
+
 }
 
 
@@ -61,11 +107,14 @@ void setup() {
 
   Serial.begin(115200);
 
-  pinMode(button1, INPUT);
+  pinMode(button1, INPUT_PULLUP);
   button1Status = "ON";
 
-  pinMode(button2, INPUT);
+  pinMode(button2, INPUT_PULLUP);
   button1Status = "ON";
+
+  pinMode(ledA, OUTPUT);
+  pinMode(ledB, OUTPUT);
 
 
   // inizializzo la parte WifiWiFi.mode(WIFI_STA);
@@ -100,7 +149,11 @@ void reconnect() {
     Serial.print("Tentativo di connessione MQTT...");
     if (client.connect( clientNAme )) {  
       Serial.println("connesso");
-      client.publish(infoTopic, "Hello world, I'm AM Domus Client");      
+      client.subscribe(ledATopic);
+      delay(100);
+      client.subscribe(ledBTopic); 
+      //client.publish(infoTopic, "Hello world, I'm AM Domus Client");
+        
     } else {
       Serial.print("Fallito, rc=");
       Serial.print(client.state());
@@ -119,7 +172,7 @@ void loop() {
   client.loop();
 
   long now = millis();
-  if (now - lastMsg > 2000) {
+  if (now - lastMsg > 30000) {
     lastMsg = now;
     ++value;
     client.publish(infoTopic, "online");
@@ -139,7 +192,7 @@ void loop() {
   }else{
     if( sendCommandSw1 ){
       long delaySw1 = now - lenCommandSw1;
-      if  ( delaySw1 < 1000 ){
+      if  ( delaySw1 < 600 ){
         client.publish(outTopic1, "TOGGLE");
       }else{
         client.publish(outTopic1, "TOGGLE_DELAYED");
@@ -147,7 +200,7 @@ void loop() {
       sendCommandSw1 = false;
     }
     lastBtn1State = 0;   
-    delay(100); 
+    delay(30); 
   }
 
     
@@ -162,7 +215,7 @@ void loop() {
   }else{
     if( sendCommandSw2 ){
       long delaySw2 = now - lenCommandSw2;
-      if  ( delaySw2 < 1000 ){
+      if  ( delaySw2 < 600 ){
         client.publish(outTopic2, "TOGGLE");
       }else{
         client.publish(outTopic2, "TOGGLE_DELAYED");
@@ -170,7 +223,7 @@ void loop() {
       sendCommandSw2 = false;
     }
     lastBtn2State = 0;
-    delay(100);
+    delay(30);
   }
 
 }
