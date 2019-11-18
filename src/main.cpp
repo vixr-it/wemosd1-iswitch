@@ -21,14 +21,26 @@ const char* mqttServer = "192.168.1.121";
 //swcomandoesternocucina
 //swscaleinterne
 
-const char* clientNAme = "swloginlogout";
+const char* clientNAme = "gestioneevprimopriano";
 char* outTopic1 = "amdomus/basicio/swloginlogout/SW1";
 char* outTopic2 = "amdomus/basicio/swloginlogout/SW2";
 
-const char* ledATopic = "amdomus/basicio/swloginlogout/ledA";
-const char* ledBTopic = "amdomus/basicio/swloginlogout/ledB";
-const char* infoTopic = "amdomus/basicio/swloginlogout/info";
+const char* ledATopic = "amdomus/basicio/test/ledA";
+const char* ledBTopic = "amdomus/basicio/test/ledB";
+const char* infoTopic = "amdomus/basicio/test/info";
 const char* outTopicTemplate = "amdomus/basicio/%s/SW%d";
+
+const char* cameraDaLettoTopic = "amdomus/clima/primopiano/ev/cameradaletto";
+const char* camerettaTopic = "amdomus/clima/primopiano/ev/cameretta";
+const char* bagnopiccoloTopic = "amdomus/clima/primopiano/ev/bagnopiccolo";
+
+const char* cucinaTopic = "amdomus/clima/primopiano/ev/cucina";
+const char* salaTopic = "amdomus/clima/primopiano/ev/sala";
+
+const char* zonaingressoTopic = "amdomus/clima/primopiano/ev/zonaingresso";
+
+
+
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -54,14 +66,19 @@ long lenCommandSw2 = 0;
 const int ledA = D2;
 const int ledB = D1;
 
+
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
   // Gestione MQTT in ingresso
   Serial.print("Ricevuto messaggio [");
   Serial.print(topic);
   Serial.print("] ");
 
-  boolean test = topic == ledATopic;
-  Serial.print(test);
+  int test = strcmp(topic, cameraDaLettoTopic);
+  int test2 = strcmp(topic, cucinaTopic);
+  Serial.println(test);
+  Serial.println(test2);
+  Serial.println(topic);
+  Serial.print(" --- ");
 
   String message;
 
@@ -71,34 +88,65 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
   Serial.println(message);
 
-  if( strcmp(topic, ledATopic ) ){
-
+  //Camera Da letto
+  if( strcmp(topic, cameraDaLettoTopic ) ==0 ) {
+    Serial.println("Camera Da Letto");
     if( message == "ON" ){
-      analogWrite( ledA, 255);
+      digitalWrite( D8, LOW  );
     }else if( message == "OFF" ){
-      analogWrite( ledA, 0);
-    }else{
-      analogWrite( ledA, message.toInt() );
+      digitalWrite( D8, HIGH  );
     }
-
-    Serial.println( message.toInt() );
-
   }
 
-  if( strcmp(topic, ledBTopic ) ){
-
+  // Cameretta
+  if( strcmp(topic, camerettaTopic ) == 0 ){
+    Serial.println("Cameretta");
     if( message == "ON" ){
-      analogWrite( ledB, 255);
+      digitalWrite( D7, LOW  );
     }else if( message == "OFF" ){
-      analogWrite( ledB, 0);
-    }else{
-      analogWrite( ledB, message.toInt() );
+      digitalWrite( D7, HIGH  );
     }
-
-    Serial.println( message.toInt() );
-
   }
 
+  // Bagno piccolo
+  if( strcmp(topic, bagnopiccoloTopic ) == 0 ){
+    Serial.println("Bagno Piccolo");
+    if( message == "ON" ){
+      digitalWrite( D6, LOW  );
+    }else if( message == "OFF" ){
+      digitalWrite( D6, HIGH  );
+    }
+  }
+
+  // Cucina
+  if( strcmp(topic, cucinaTopic ) == 0 ){
+    Serial.println("Cucina");
+    if( message == "ON" ){
+      digitalWrite( D5, LOW  );
+    }else if( message == "OFF" ){
+      digitalWrite( D5, HIGH  );
+    }
+  }
+
+  // Sala
+  if( strcmp(topic, salaTopic ) == 0 ){
+    Serial.println("Sala");
+    if( message == "ON" ){
+      digitalWrite( D0, LOW  );
+    }else if( message == "OFF" ){
+      digitalWrite( D0, HIGH  );
+    }
+  }
+
+  // Zona ingresso
+  if( strcmp(topic, zonaingressoTopic )  == 0 ){
+    Serial.println("Ingresso");
+    if( message == "ON" ){
+      digitalWrite( D3, LOW  );
+    }else if( message == "OFF" ){
+      digitalWrite( D3, HIGH  );
+    }
+  }
 
 }
 
@@ -107,16 +155,13 @@ void setup() {
 
   Serial.begin(115200);
 
-  pinMode(button1, INPUT_PULLUP);
-  button1Status = "ON";
-
-  pinMode(button2, INPUT_PULLUP);
-  button1Status = "ON";
-
-  pinMode(ledA, OUTPUT);
-  pinMode(ledB, OUTPUT);
-
-
+  pinMode(D0, OUTPUT);
+  pinMode(D3, OUTPUT);
+  pinMode(D5, OUTPUT);
+  pinMode(D6, OUTPUT);
+  pinMode(D7, OUTPUT);
+  pinMode(D8, OUTPUT);
+  
   // inizializzo la parte WifiWiFi.mode(WIFI_STA);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -138,9 +183,8 @@ void setup() {
   client.setServer(mqttServer, 1883);
   client.setCallback(mqttCallback);
 
-  Serial.println(outTopic1);
   delay(2000);
-  Serial.println(outTopic2);
+
 }
 
 void reconnect() {
@@ -149,9 +193,18 @@ void reconnect() {
     Serial.print("Tentativo di connessione MQTT...");
     if (client.connect( clientNAme )) {  
       Serial.println("connesso");
-      client.subscribe(ledATopic);
+      client.subscribe(cameraDaLettoTopic);
       delay(100);
-      client.subscribe(ledBTopic); 
+      client.subscribe(camerettaTopic);
+      delay(100);
+      client.subscribe(bagnopiccoloTopic);
+      delay(100);
+      client.subscribe(cucinaTopic);
+      delay(100);
+      client.subscribe(salaTopic);
+      delay(100);
+      client.subscribe(zonaingressoTopic);
+      delay(100);
       //client.publish(infoTopic, "Hello world, I'm AM Domus Client");
         
     } else {
@@ -176,54 +229,6 @@ void loop() {
     lastMsg = now;
     ++value;
     client.publish(infoTopic, "online");
-  }
-
-  int tmpButton1 = digitalRead(button1);  
-  int tmpButton2 = digitalRead(button2);
-
-  if( tmpButton1 == 0 ){
-    if( lastBtn1State == 0 ){      
-
-      lenCommandSw1 = now;
-      lastBtn1State = 1;
-      Serial.println("Button 1 Pressed");
-      sendCommandSw1 = true;      
-    }        
-  }else{
-    if( sendCommandSw1 ){
-      long delaySw1 = now - lenCommandSw1;
-      if  ( delaySw1 < 600 ){
-        client.publish(outTopic1, "TOGGLE");
-      }else{
-        client.publish(outTopic1, "TOGGLE_DELAYED");
-      }
-      sendCommandSw1 = false;
-    }
-    lastBtn1State = 0;   
-    delay(30); 
-  }
-
-    
-  if( tmpButton2 == 0 ){
-    if( lastBtn2State == 0 ){      
-
-      lenCommandSw2 = now;
-      lastBtn2State = 1;
-      Serial.println("Button 2 Pressed");
-      sendCommandSw2 = true;      
-    }        
-  }else{
-    if( sendCommandSw2 ){
-      long delaySw2 = now - lenCommandSw2;
-      if  ( delaySw2 < 600 ){
-        client.publish(outTopic2, "TOGGLE");
-      }else{
-        client.publish(outTopic2, "TOGGLE_DELAYED");
-      }
-      sendCommandSw2 = false;
-    }
-    lastBtn2State = 0;
-    delay(30);
   }
 
 }
